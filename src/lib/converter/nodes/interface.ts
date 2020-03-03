@@ -41,7 +41,14 @@ export class InterfaceConverter extends ConverterNodeComponent<ts.InterfaceDecla
             const extendsClause = toArray(node.heritageClauses).find(h => h.token === ts.SyntaxKind.ExtendsKeyword);
             if (extendsClause) {
                 extendsClause.types.forEach((baseType) => {
-                    const type = context.getTypeAtLocation(baseType);
+                    let type;
+                    if(baseType.expression.getText() === "Omit"){
+                        type = context.getTypeAtLocation(baseType.typeArguments[0]);
+                        const omittedLiterals = baseType.typeArguments.slice(1).map((n)=>n.literal.text)
+                        type.properties = type.properties && type.properties.filter(prop=>!omittedLiterals.includes(prop.name))
+                    }else{
+                        type = context.getTypeAtLocation(baseType);
+                    }
                     if (!context.isInherit) {
                         if (!reflection!.extendedTypes) {
                             reflection!.extendedTypes = [];
